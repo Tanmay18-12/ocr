@@ -1,0 +1,32 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output files
+output/
+logs/
+*.log
+
+# Test documents
+sample_documents/
+test_files/
+
+# OS
+.DS_Store
+Thumbs.db

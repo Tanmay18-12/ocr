@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 Backend Connection Test</h1>
+        <p>This page tests the connection to your Flask backend server.</p>
+
+        <div>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <button onclick="testStats()">Test Stats Endpoint</button>
+            <button onclick="testUpload()">Test Upload Endpoint</button>
+            <button onclick="testAll()">Test All Endpoints</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testHealth() {
+            clearResults();
+            addResult('🏥 Testing health endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    addResult(`✅ Health endpoint working!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Health endpoint failed!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Health endpoint error!\nError: ${error.message}\nThis usually means the backend server is not running.`, 'error');
+            }
+        }
+
+        async function testStats() {
+            addResult('📊 Testing stats endpoint...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    addResult(`✅ Stats endpoint working!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Stats endpoint failed!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Stats endpoint error!\nError: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUpload() {
+            addResult('📤 Testing upload endpoint (without file)...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (response.status === 400) {
+                    addResult(`✅ Upload endpoint working (correctly rejected empty request)!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`⚠️ Upload endpoint responded unexpectedly!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'info');
+                }
+            } catch (error) {
+                addResult(`❌ Upload endpoint error!\nError: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAll() {
+            clearResults();
+            addResult('🚀 Running all tests...', 'info');
+
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testStats();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testUpload();
+
+            addResult('✅ All tests completed!', 'success');
+        }
+
+        // Auto-run health test on page load
+        window.onload = function () {
+            testHealth();
+        };
+    </script>
+</body>
+
+</html>

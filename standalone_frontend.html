@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Processing System - Standalone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .connected {
+            background: #28a745;
+        }
+
+        .disconnected {
+            background: #dc3545;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-section h2,
+        .results-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .document-type-selector {
+            margin-bottom: 20px;
+        }
+
+        .document-type-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .document-type-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .dropzone {
+            border: 3px dashed #ccc;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 20px;
+        }
+
+        .dropzone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .dropzone.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .result-item.error {
+            border-left-color: #dc3545;
+            background: #fdf2f2;
+        }
+
+        .result-item.duplicate {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-type {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .extracted-fields {
+            display: grid;
+            gap: 10px;
+        }
+
+        .field-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .field-value {
+            color: #666;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff40;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .log-info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Document Processing System</h1>
+            <p>Standalone version - Direct backend connection</p>
+
+            <div class="status-bar">
+                <div id="statusIndicator" class="status-indicator disconnected">
+                    🔴 Backend Disconnected
+                </div>
+                <button class="btn btn-primary" onclick="testConnection()">
+                    🔄 Test Connection
+                </button>
+                <button class="btn btn-primary" onclick="clearLog()">
+                    🗑️ Clear Log
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="card upload-section">
+                <h2>Upload Document</h2>
+
+                <div class="document-type-selector">
+                    <label for="documentType">Document Type:</label>
+                    <select id="documentType">
+                        <option value="AADHAAR">Aadhaar Card</option>
+                        <option value="PAN">PAN Card</option>
+                    </select>
+                </div>
+
+                <div class="dropzone" id="dropzone">
+                    <div>
+                        📄 Drag & drop a document here, or click to select<br>
+                        <small>Supports PDF, PNG, JPG, JPEG (max 16MB)</small>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <h4>Selected File</h4>
+                    <p id="fileName"></p>
+                    <p id="fileSize"></p>
+                </div>
+
+                <button class="upload-button" id="uploadButton" onclick="uploadDocument()" disabled>
+                    Upload Document
+                </button>
+            </div>
+
+            <div class="card results-section">
+                <h2>Processing Results</h2>
+                <div id="results" class="results">
+                    <p style="text-align: center; color: #666; font-style: italic; padding: 40px 20px;">
+                        No documents processed yet. Upload a document to see results here.
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <div class="card">
+            <h2>Debug Log</h2>
+            <div id="debugLog" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let selectedFile = null;
+        let backendConnected = false;
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debugLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        // Update status indicator
+        function updateStatus(connected) {
+            backendConnected = connected;
+            const indicator = document.getElementById('statusIndicator');
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                indicator.textContent = '🟢 Backend Connected';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                indicator.textContent = '🔴 Backend Disconnected';
+            }
+        }
+
+        // Test backend connection
+        async function testConnection() {
+            log('🔍 Testing backend connection...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Backend connection successful: ${data.message}`, 'success');
+                    updateStatus(true);
+
+                    // Test stats endpoint too
+                    try {
+                        const statsResponse = await fetch(`${API_BASE}/stats`);
+                        const statsData = await statsResponse.json();
+                        log(`📊 Stats loaded: ${statsData.data?.user_statistics?.total_users || 0} users`, 'success');
+                    } catch (statsError) {
+                        log(`⚠️ Stats endpoint failed: ${statsError.message}`, 'error');
+                    }
+                } else {
+                    log(`❌ Backend responded with error: ${response.status} ${response.statusText}`, 'error');
+                    updateStatus(false);
+                }
+            } catch (error) {
+                log(`❌ Backend connection failed: ${error.message}`, 'error');
+                log(`💡 Make sure backend server is running on port 5000`, 'info');
+                updateStatus(false);
+            }
+        }
+
+        // File handling
+        function setupFileHandling() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const uploadButton = document.getElementById('uploadButton');
+
+            // Click to select file
+            dropzone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Drag and drop
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelection(files[0]);
+                }
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelection(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelection(file) {
+            selectedFile = file;
+
+            // Show file info
+            document.getElementById('fileName').textContent = `Name: ${file.name}`;
+            document.getElementById('fileSize').textContent = `Size: ${formatFileSize(file.size)} | Type: ${file.type}`;
+            document.getElementById('fileInfo').style.display = 'block';
+
+            // Enable upload button
+            document.getElementById('uploadButton').disabled = false;
+
+            log(`📁 File selected: ${file.name} (${formatFileSize(file.size)})`, 'info');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload document
+        async function uploadDocument() {
+            if (!selectedFile) {
+                log('❌ No file selected', 'error');
+                return;
+            }
+
+            if (!backendConnected) {
+                log('❌ Backend not connected. Please test connection first.', 'error');
+                return;
+            }
+
+            const documentType = document.getElementById('documentType').value;
+            const uploadButton = document.getElementById('uploadButton');
+
+            // Disable button and show loading
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<div class="loading"><div class="spinner"></div>Processing...</div>';
+
+            log(`📤 Starting upload: ${selectedFile.name} as ${documentType}`, 'info');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('documentType', documentType);
+
+                log('🚀 Sending request to backend...', 'info');
+
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                log(`📨 Response received: ${response.status} ${response.statusText}`, 'info');
+
+                if (response.ok && data.success) {
+                    log('✅ Upload successful!', 'success');
+                    displayResult(data.data, 'success');
+                } else if (data.error === 'DUPLICATE_DOCUMENT') {
+                    log('⚠️ Duplicate document detected', 'error');
+                    displayResult(data, 'duplicate');
+                } else {
+                    log(`❌ Upload failed: ${data.message}`, 'error');
+                    displayResult(data, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Upload error: ${error.message}`, 'error');
+                displayResult({ message: error.message, error: 'NETWORK_ERROR' }, 'error');
+            } finally {
+                // Reset button
+                uploadButton.disabled = false;
+                uploadButton.innerHTML = `Upload ${documentType} Document`;
+            }
+        }
+
+        // Display results
+        function displayResult(data, type) {
+            const resultsDiv = document.getElementById('results');
+
+            // Clear "no results" message
+            if (resultsDiv.children.length === 1 && resultsDiv.children[0].tagName === 'P') {
+                resultsDiv.innerHTML = '';
+            }
+
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result-item ${type}`;
+
+            let content = '';
+
+            if (type === 'success') {
+                content = `
+                    <div class="result-header">
+                        <span class="result-type">${data.documentType}</span>
+                        <span>Confidence: ${(data.confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="extracted-fields">
+                        ${Object.entries(data.extractedFields).map(([key, value]) =>
+                    value ? `<div class="field-item">
+                                <span class="field-label">${key}:</span>
+                                <span class="field-value">${value}</span>
+                            </div>` : ''
+                ).join('')}
+                        ${data.userId ? `<div class="field-item">
+                            <span class="field-label">User ID:</span>
+                            <span class="field-value" style="font-family: monospace; font-size: 12px;">${data.userId}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+            } else if (type === 'duplicate') {
+                content = `
+                    <div class="result-header">
+                        <span class="result-type" style="background: #ffc107;">DUPLICATE DETECTED</span>
+                    </div>
+                    <p><strong>Message:</strong> ${data.message}</p>
+                    ${data.data?.existingRecord ? `
+                        <div style="margin-top: 10px; padding: 10px; background: rgba(255,193,7,0.1); border-radius: 5px;">
+                            <strong>Existing Record:</strong><br>
+                            Document ID: ${data.data.existingRecord.document_id}<br>
+                            Name: ${data.data.existingRecord.name}<br>
+                            File: ${data.data.existingRecord.file_path}
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                content = `
+                    <div class="result-header">
+                        <span class="result-type" style="background: #dc3545;">ERROR</span>
+                    </div>
+                    <p><strong>Message:</strong> ${data.message}</p>
+                    ${data.error ? `<p><strong>Error Code:</strong> ${data.error}</p>` : ''}
+                `;
+            }
+
+            resultDiv.innerHTML = content + `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                ${new Date().toLocaleString()}
+            </div>`;
+
+            resultsDiv.insertBefore(resultDiv, resultsDiv.firstChild);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Standalone Document Processing System loaded', 'info');
+            setupFileHandling();
+            testConnection(); // Auto-test connection on load
+        });
+    </script>
+</body>
+
+</html>
